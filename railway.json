@@ -1,0 +1,13 @@
+{
+    "$schema": "https://railway.app/railway.schema.json",
+    "build": {
+      "builder": "NIXPACKS",  // Auto-detects Python
+      "buildCommand": "pip install -r requirements.txt",
+      "outputDirectory": "/app"  // Copies your files (bot.py, etc.) to /app
+    },
+    "deploy": {
+      "startCommand": "python bot.py",  // Overrides Procfile if needed, but keeps it
+      "restartPolicyType": "ON_FAILURE",
+      "restartPolicyMaxRetries": 10
+    }
+  }
