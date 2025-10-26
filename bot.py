@@ -395,6 +395,13 @@ async def send_match_request(bot, sender_id, target_id, query):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
     await query.edit_message_text("Request sent!")
+    # === PREVENT MULTIPLE INSTANCES ===
+    import telegram
+    try:
+        await app.bot.delete_webhook(drop_pending_updates=True)
+        print("Old webhook cleared")
+    except:
+        pass
 
 # === Main ===
 def main():
@@ -403,22 +410,13 @@ def main():
 
     app = Application.builder().token(TOKEN).build()
 
-    conv = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
-        states={
-            NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, name)],
-            PHOTO: [MessageHandler(filters.PHOTO, photo)],
-            LOCATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, location)],
-            NUM: [MessageHandler(filters.TEXT & ~filters.COMMAND, num)],
-            GENDER: [MessageHandler(filters.TEXT & ~filters.COMMAND, gender)],
-            LOOKING_FOR: [MessageHandler(filters.TEXT & ~filters.COMMAND, looking_for)],
-            RELIGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, religion)],
-            AGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, age)],
-            BUDGET: [MessageHandler(filters.TEXT & ~filters.COMMAND, budget)],
-            BIO: [MessageHandler(filters.TEXT & ~filters.COMMAND, bio)],
-        },
-        fallbacks=[CommandHandler('cancel', cancel)],
-    )
+async def clear_old_state():
+        try:
+            await app.bot.delete_webhook(drop_pending_updates=True)
+        except:
+            pass
+    app.job_queue.run_once(lambda _: app.run_async(clear_old_state()), 0)
+    
 
     app.add_handler(conv)
     app.add_handler(CommandHandler('match', match))
