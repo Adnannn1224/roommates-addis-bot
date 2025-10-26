@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = '/app/roommates.db'  # ← CHANGE THIS
+DB_PATH = 'roommates.db'  # ← Current directory
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -22,4 +22,4 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
-    print("DB ready at /app/roommates.db")
+    print("DB ready at ./roommates.db")
