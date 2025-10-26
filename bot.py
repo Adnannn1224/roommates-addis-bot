@@ -399,19 +399,20 @@ def main():
     from database import init_db
     init_db()
 
-    app = Application.builder().token(TOKEN).build()
-
-    # CLEAR OLD STATE
-    async def clear_old_state():
+    # === CLEAR OLD STATE AFTER BOT STARTS ===
+    async def clear_old_state(context):
         try:
-            await app.bot.delete_webhook(drop_pending_updates=True)
+            await context.bot.delete_webhook(drop_pending_updates=True)
             print("Old webhook/polling cleared")
         except Exception as e:
             print(f"Clear failed: {e}")
 
-    app.job_queue.run_once(lambda _: app.create_task(clear_old_state()), 0)
+    async def post_init(application: Application):
+        await clear_old_state(application)
 
-    # Handlers
+    app = Application.builder().token(TOKEN).post_init(post_init).build()
+
+    # === Handlers ===
     conv = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -438,6 +439,6 @@ def main():
 
     print("Bot is running with MATCHING SYSTEM...")
     app.run_polling()
-
+    
 if __name__ == '__main__':
     main()
