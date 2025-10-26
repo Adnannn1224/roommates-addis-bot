@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = '/app/roommates.db'   # Railway persistent path
+DB_PATH = '/app/roommates.db'
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -11,7 +11,10 @@ def init_db():
         user_id INTEGER PRIMARY KEY,
         name TEXT, photo_path TEXT, location TEXT,
         num_roommates INTEGER, gender TEXT, religion TEXT,
-        age INTEGER, budget REAL, bio TEXT
+        age INTEGER, budget REAL, bio TEXT,
+        looking_for TEXT,
+        pending_requests TEXT DEFAULT '',
+        matches TEXT DEFAULT ''
     )
     ''')
     conn.commit()
@@ -19,4 +22,4 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
-    print("DB ready")
+    print("DB ready with matching system")
