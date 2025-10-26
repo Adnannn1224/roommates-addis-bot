@@ -19,8 +19,8 @@ TOKEN = os.getenv('BOT_TOKEN')
 
 # === DB ===
 def get_conn():
-    return sqlite3.connect('/data/roommates.db')
-    
+    return sqlite3.connect('/app/roommates.db')
+
 def get_user(uid):
     conn = get_conn()
     c = conn.cursor()
