@@ -11,7 +11,7 @@ from photo_handler import save_photo
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# === Conversation states ===
+# === States ===
 (NAME, PHOTO, LOCATION, NUM, GENDER, LOOKING_FOR,
  RELIGION, AGE, BUDGET, BIO) = range(10)
 
@@ -43,7 +43,7 @@ def save_user(data):
     conn.commit()
     conn.close()
 
-# === Start ===
+# === Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     await update.message.reply_text(
@@ -55,7 +55,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['user_id'] = user.id
     return NAME
 
-# === Handlers ===
 async def name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['name'] = update.message.text
     await update.message.reply_text("Send your *profile picture*:")
@@ -77,7 +76,7 @@ async def num(update: Update, context: ContextTypes.DEFAULT_TYPE):
         n = int(update.message.text)
         if 1 <= n <= 5:
             context.user_data['num'] = n
-            kb = [['Male', 'Female']]  # ONLY MALE & FEMALE
+            kb = [['Male', 'Female']]
             await update.message.reply_text(
                 "Your gender:", reply_markup=ReplyKeyboardMarkup(kb, one_time_keyboard=True)
             )
@@ -91,7 +90,7 @@ async def num(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def gender(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['gender'] = update.message.text
-    kb = [['Male', 'Female']]  # ONLY MALE & FEMALE
+    kb = [['Male', 'Female']]
     await update.message.reply_text(
         "Who are you *looking for*?", reply_markup=ReplyKeyboardMarkup(kb, one_time_keyboard=True)
     )
@@ -152,7 +151,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Cancelled.", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
-# === /match Command ===
+# === /match ===
 async def match(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = update.effective_user.id
     user = get_user(uid)
@@ -195,7 +194,7 @@ async def match(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-# === Button Handler (Match Requests) ===
+# === Button Handler ===
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -222,8 +221,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=target_id,
             text=f"@{update.effective_user.username or sender['name']} wants to match!\n"
-                 f"Location: {sender['location']} | Budget: {sender['budget']} ETB\n"
-                 f"Send request back?",
+                 f"Location: {sender['location']} | Budget: {sender['budget']} ETB",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         await query.edit_message_text("Request sent! Waiting for response...")
@@ -395,13 +393,6 @@ async def send_match_request(bot, sender_id, target_id, query):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
     await query.edit_message_text("Request sent!")
-    # === PREVENT MULTIPLE INSTANCES ===
-    import telegram
-    try:
-        await app.bot.delete_webhook(drop_pending_updates=True)
-        print("Old webhook cleared")
-    except:
-        pass
 
 # === Main ===
 def main():
@@ -410,13 +401,33 @@ def main():
 
     app = Application.builder().token(TOKEN).build()
 
-async def clear_old_state():
+    # CLEAR OLD STATE
+    async def clear_old_state():
         try:
             await app.bot.delete_webhook(drop_pending_updates=True)
-        except:
-            pass
-    app.job_queue.run_once(lambda _: app.run_async(clear_old_state()), 0)
-    
+            print("Old webhook/polling cleared")
+        except Exception as e:
+            print(f"Clear failed: {e}")
+
+    app.job_queue.run_once(lambda _: app.create_task(clear_old_state()), 0)
+
+    # Handlers
+    conv = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, name)],
+            PHOTO: [MessageHandler(filters.PHOTO, photo)],
+            LOCATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, location)],
+            NUM: [MessageHandler(filters.TEXT & ~filters.COMMAND, num)],
+            GENDER: [MessageHandler(filters.TEXT & ~filters.COMMAND, gender)],
+            LOOKING_FOR: [MessageHandler(filters.TEXT & ~filters.COMMAND, looking_for)],
+            RELIGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, religion)],
+            AGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, age)],
+            BUDGET: [MessageHandler(filters.TEXT & ~filters.COMMAND, budget)],
+            BIO: [MessageHandler(filters.TEXT & ~filters.COMMAND, bio)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
 
     app.add_handler(conv)
     app.add_handler(CommandHandler('match', match))
