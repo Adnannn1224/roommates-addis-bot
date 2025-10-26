@@ -1,11 +1,11 @@
 import os
 from PIL import Image
 
-def save_photo(photo, user_id, bot):
+async def save_photo(photo, user_id, bot):
     os.makedirs('photos', exist_ok=True)
-    file = bot.get_file(photo[-1].file_id)
+    file = await bot.get_file(photo[-1].file_id)  # ← ADD 'await'
     path = f'photos/{user_id}.jpg'
-    file.download(path)
+    await file.download_to_drive(path)  # ← Use async download
 
     img = Image.open(path)
     img.thumbnail((200, 200))

@@ -61,11 +61,11 @@ async def name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return PHOTO
 
 async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    path = save_photo(update.message.photo, context.user_data['user_id'], context.bot)
+    path = await save_photo(update.message.photo, context.user_data['user_id'], context.bot)
     context.user_data['photo'] = path
     await update.message.reply_text("Where in Addis? (e.g. Bole, Piassa)")
     return LOCATION
-
+    
 async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['location'] = update.message.text
     await update.message.reply_text("How many roommates? (1–5)")
