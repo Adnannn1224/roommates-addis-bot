@@ -1,11 +1,9 @@
 {
     "$schema": "https://railway.app/railway.schema.json",
     "build": {
-      "builder": "NIXPACKS",
-      "buildCommand": "pip install -r requirements.txt",
-      "outputDirectory": "."
+      "builder": "NIXPACKS"
     },
     "deploy": {
-      "startCommand": "cd /app && python bot.py"
+      "startCommand": "python bot.py"
     }
   }
